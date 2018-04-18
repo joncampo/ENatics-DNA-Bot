@@ -39,7 +39,7 @@ def fb_connector(global_command, FB_BASE_URL,FB_BOT_TOKEN,FB_BOT_VERIFY_PASS,req
     elif request.method == 'POST':
         data = request.get_json()
         #print(data) # you may not want to log every incoming message in production, but it's good for testing
-
+        print (data)
         if data["object"] == "page":
             
             for entry in data["entry"]:
@@ -47,14 +47,14 @@ def fb_connector(global_command, FB_BASE_URL,FB_BOT_TOKEN,FB_BOT_VERIFY_PASS,req
                 for messaging_event in entry["messaging"]:
                     
                     if messaging_event.get("message"):  # someone sent us a message
-                        msg=None
+                        msg=[None,None]
                         sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                         recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                         message_text = messaging_event["message"]["text"]  # the message's text
 
                         if sender_id != page_id:
                             msg = global_command.handle_text(chat="facebook",senders_id=sender_id,cmd=message_text,token=FB_BOT_TOKEN, room_id=None)
-
+                            
                             if msg[0] != None:
                                 send_message(FB_BOT_TOKEN,sender_id, msg[0])
                         else:

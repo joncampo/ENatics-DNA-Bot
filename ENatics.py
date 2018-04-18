@@ -24,10 +24,12 @@ from PIL import Image
 from ncclient import manager
 import xml.dom.minidom
 from flask import Flask, request, render_template, url_for
+from slackclient import SlackClient
 
 #####################Connector
 from modules.connectors.spark import spark_connector,send_spark_get,spark_webhook, spark_send_message
 from modules.connectors.facebook import fb_connector,send_message,send_media, send_attachment_id
+from modules.connectors.slack import slack_connector,slack_send_message,slack_send_media
 #####################APIC-EM
 from modules.functions.ENatics_apic_em import apic_em_getDevices, apic_em_checkStatus, apic_em_getConfig, apic_em_getDetails
 #####################DNAC
@@ -43,7 +45,7 @@ from modules.functions.ENatics_google import googling
 
 #####################Settings
 
-from settings import get_settings
+from credentials.settings import get_settings
 settings=get_settings()
 APIC_EM_BASE_URL = settings[0]
 APIC_EM_USER = settings[1]
@@ -69,7 +71,22 @@ SPARK_WEBHOOK_URL=settings[20]
 SPARK_BOT_EMAIL=settings[21]
 SPARK_BOT_NAME=settings[22]
 SLACK_BOT_TOKEN = settings[23]
+SLACK_WEBHOOK_SECRET=settings[24]
+SLACK_BASE_URL=settings[25]
+SLACK_BOT_USERNAME=settings[26]
 
+#################Check Authorized Users
+
+spark_authorized_users=open('credentials/spark_email.txt').read().split('\n')
+if "###" in spark_authorized_users[0]:
+	del spark_authorized_users[0]
+
+slack_authorized_users=open('credentials/slack_username.txt').read().split('\n')
+if "###" in slack_authorized_users[0]:
+	del slack_authorized_users[0]
+
+###############Slack Client
+slack_client = SlackClient(SLACK_BOT_TOKEN)
 
 #####################Business Logic
 class global_command():
@@ -103,6 +120,9 @@ class global_command():
 				content_file=('temp/enatics.png', open('temp/enatics.png', 'rb'),'image/png')
 			elif chat == "facebook": 
 				send_to_page=send_attachment_id(FB_BOT_TOKEN,senders_id, '157994951529488')
+			elif chat == "slack":
+				content_file=('temp/enatics.png', open('temp/enatics.png', 'rb'),'image/png')
+				slack_send_media(token,room_id,content_file)
 
 
 		elif 'about' in cmd:
@@ -117,7 +137,9 @@ class global_command():
 				spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 			elif chat == "facebook":
 				send_message(FB_BOT_TOKEN, senders_id, "Got it! Please wait...")
-			
+			elif chat == "slack":
+				slack_send_message(senders_id,room_id, "Got it! Please wait...")
+
 			dnac_status=dnac_checkStatus(DNAC_BASE_URL,DNAC_Auth)
 			
 			if dnac_status[0] is True:
@@ -136,7 +158,9 @@ class global_command():
 				spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 			elif chat == "facebook":
 				send_message(FB_BOT_TOKEN, senders_id, "Got it! Please wait...")
-			
+			elif chat == "slack":
+				slack_send_message(senders_id,room_id, "Got it! Please wait...")
+
 			dnac_status=dnac_checkStatus(DNAC_BASE_URL,DNAC_Auth)
 			
 			if dnac_status[0] is True:
@@ -166,7 +190,8 @@ class global_command():
 					spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 				elif chat == "facebook":
 					send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
-
+				elif chat == "slack":
+					slack_send_message(senders_id,room_id, "Got it! Please wait...")
 				device_id=global_command.dnac_raw_result[1][int(place_num)][str(config_num)]
 				result=dnac_getDetails(DNAC_BASE_URL,DNAC_Auth,global_command.DNAC_Cookies,device_id)
 			else:
@@ -177,6 +202,8 @@ class global_command():
 				spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 			elif chat == "facebook":
 				send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
+			elif chat == "slack":
+				slack_send_message(senders_id,room_id, "Got it! Please wait...")				
 			#spark_send_message(BOT_SPARK_TOKEN, room_id, "Got it <@personEmail:"+senders_email+">. Please wait.")
 			ticket=apic_em_checkStatus(APIC_EM_BASE_URL,APIC_EM_USER,APIC_EM_PASS)
 			
@@ -207,7 +234,8 @@ class global_command():
 					spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 				elif chat == "facebook":
 					send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
-
+				elif chat == "slack":
+					slack_send_message(senders_id,room_id, "Got it! Please wait...")
 				device_id=global_command.raw_result[1][int(place_num)][str(config_num)]
 				config=apic_em_getConfig(APIC_EM_BASE_URL,global_command.apic_ticket,device_id)
 				config_split=config.split("\n\n\n\n\n\n\n\n")
@@ -219,7 +247,8 @@ class global_command():
 						spark_send_message(SPARK_BOT_TOKEN, room_id, config_split[num])
 					elif chat == "facebook":
 						send_message(FB_BOT_TOKEN,senders_id, config_split[num])
-
+					elif chat == "slack":
+						slack_send_message(senders_id,room_id, "Got it! Please wait...")
 					num=num+1
 				result="End of config"
 
@@ -243,13 +272,22 @@ class global_command():
 					spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 				elif chat == "facebook":
 					send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
-
+				elif chat == "slack":
+					slack_send_message(senders_id,room_id, "Got it! Please wait...")
 				device_id=global_command.raw_result[1][int(place_num)][str(config_num)]
 				result=apic_em_getDetails(APIC_EM_BASE_URL,global_command.apic_ticket,device_id)
 			else:
 				result="\n\nPlease choose a correct number within list\n\n"
 
 		elif 'list clients' in cmd or 'list client' in cmd:
+			try:
+					FULL_URL = "https://"+CMX_BASE_URL+"/api/config/v1/maps/floor/list"
+					headers = {"Authorization": CMX_Auth}
+					A=requests.get(FULL_URL, headers=headers, verify=False, timeout=3)
+			except:
+				result="Please kindly check CMX connectivity or user/pass!"
+				return result,content_file
+			
 
 			global_command.raw_cmx_list_users=cmx_list_client(CMX_BASE_URL,CMX_Auth)
 			#result=cmx_list_users
@@ -259,10 +297,16 @@ class global_command():
 			result=welcome_text+"\n".join(str(x) for x in global_command.raw_cmx_list_users[0])+ending_text
 
 		elif 'list floors' in cmd or 'list floor' in cmd:
-
-			global_command.raw_cmx_list_floors=cmx_list_floors(CMX_BASE_URL,CMX_Auth)
+			try:
+					FULL_URL = "https://"+CMX_BASE_URL+"/api/config/v1/maps/floor/list"
+					headers = {"Authorization": CMX_Auth}
+					A=requests.get(FULL_URL, headers=headers, verify=False, timeout=3)
+			except:
+				result="Please kindly check CMX connectivity or user/pass!"
+				return result,content_file
 			#result=cmx_list_users
 			#print (raw_cmx_list_floors)
+			global_command.raw_cmx_list_floors=cmx_list_floors(CMX_BASE_URL,CMX_Auth)
 			welcome_text="Hi Please see your requested list of floors:\n"
 			ending_text="\n\n\nType \"floor # clients\" to get location of clients in a floor (ex. floor 1 clients)\n\nType \"floor # restroom\" to get location of users in a floor"
 			result=welcome_text+"\n".join(str(x) for x in global_command.raw_cmx_list_floors[0])+ending_text
@@ -303,6 +347,11 @@ class global_command():
 							send_to_page=send_attachment_id(FB_BOT_TOKEN,senders_id,upload_id)
 							print ("upload successful!")
 							result="Client "+cmx_user+"(Red Pin) is at "+cmx_client_details[1]
+						elif chat == "slack":
+							content_file=('temp/map2.png', open('temp/map2.png', 'rb'),'image/png')
+							slack_send_media(token,room_id,content_file)
+							result="Client "+cmx_user+"(Red Pin) is at "+cmx_client_details[1]
+					
 					except:
 						result="Error Uploading Map"
 
@@ -331,6 +380,8 @@ class global_command():
 					spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 				elif chat == "facebook":
 					send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
+				elif chat == "slack":
+					slack_send_message(senders_id,room_id, "Got it! Please wait...")					
 			except:
 				result="\n\nError found! Please retry sending the command\n\n"
 				return result,content_file
@@ -353,6 +404,10 @@ class global_command():
 								send_to_page=send_attachment_id(FB_BOT_TOKEN,senders_id,upload_id)
 								print ("upload successful!")
 								result="Restroom(s) (GREEN BOX) Found!"
+							elif chat == "slack":
+								content_file=('temp/map2.png', open('temp/map2.png', 'rb'),'image/png')
+								slack_send_media(token,room_id,content_file)
+								result="Restroom(s) (GREEN BOX) Found!"
 						except:
 							result="Error Uploading Map"
 						
@@ -370,6 +425,8 @@ class global_command():
 						spark_send_message(SPARK_BOT_TOKEN, room_id, "Locating clients and Downloading Map. Please wait...")
 					elif chat == "facebook":
 						send_message(FB_BOT_TOKEN,senders_id, "Locating clients and Downloading Map. Please wait...")
+					elif chat == "slack":
+						slack_send_message(senders_id,room_id, "Locating clients and Downloading Map. Please wait...")
 
 					floor_normalized=(floor.replace(">","/"))
 					floor_id=get_floor_id(CMX_BASE_URL,CMX_Auth,floor_normalized)
@@ -388,7 +445,9 @@ class global_command():
 								spark_send_message(SPARK_BOT_TOKEN, room_id, "Processing "+str(total)+" clients on map! Please wait...")
 							elif chat == "facebook":
 								send_message(FB_BOT_TOKEN,senders_id, "Processing "+str(total)+" clients on map! Please wait...")
-
+							elif chat == "slack":
+								slack_send_message(senders_id,room_id, "Processing "+str(total)+" clients on map! Please wait...")
+							
 							cmx_edit=cmx_edit_map(users_x,users_y,bundle=1)
 							print ("Uploading file")
 							
@@ -401,6 +460,10 @@ class global_command():
 									upload_id=send_media(FB_BOT_TOKEN,content_filename)
 									send_to_page=send_attachment_id(FB_BOT_TOKEN,senders_id,upload_id)
 									print ("upload successful!")
+									result=str(total)+" Active Clients (Red Pin) found on \n\n"+floor
+								elif chat == "slack":
+									content_file=('temp/map2.png', open('temp/map2.png', 'rb'),'image/png')
+									slack_send_media(token,room_id,content_file)
 									result=str(total)+" Active Clients (Red Pin) found on \n\n"+floor
 
 							except:
@@ -494,6 +557,8 @@ class global_command():
 				spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 			elif chat == "facebook":
 				send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
+			elif chat == "slack":
+				slack_send_message(senders_id,room_id, "Got it! Please wait...")				
 			netconf_result_raw=netconf_get_interface(CSR1KV_URL, NETCONF_PORT, NETCONF_USER, NETCONF_PASS)
 			netconf_result=(xml.dom.minidom.parseString(netconf_result_raw.xml).toprettyxml())
 
@@ -516,6 +581,8 @@ class global_command():
 				spark_send_message(SPARK_BOT_TOKEN, room_id, "Got it <@personEmail:"+senders_id+">. Please wait.")
 			elif chat == "facebook":
 				send_message(FB_BOT_TOKEN,senders_id, "Got it! Please wait...")
+			elif chat == "slack":
+				slack_send_message(senders_id,room_id, "Got it! Please wait...")				
 			config_text=cmd.split()
 			del config_text[0]
 			if config_text is None:
@@ -565,19 +632,35 @@ def webhook():
 @app.route('/facebook', methods=['GET', 'POST'])
 def facebookconnector():
 
-	message=fb_connector(global_command, FB_BASE_URL,FB_BOT_TOKEN,FB_BOT_VERIFY_PASS,request)
+	#print (request)
+	if FB_BASE_URL != "XXX" and FB_BOT_TOKEN != "XXX" and FB_BOT_VERIFY_PASS != "XXX":
+		message=fb_connector(global_command, FB_BASE_URL,FB_BOT_TOKEN,FB_BOT_VERIFY_PASS,request)
+	else:
+		print ("Please check FB URL, FB Bot Token or FB Bot Verify pass!")
+		message=False
 
 	return message
 
 @app.route('/spark', methods=['GET', 'POST'])
 def sparkconnector():
-	#if request.method == 'POST':
-		#webhook = request.get_json(silent=True)
-		#message=spark_connector(global_command, SPARK_BASE_URL, SPARK_BOT_TOKEN, SPARK_BOT_EMAIL, SPARK_BOT_NAME, request, method="post")
-	message=spark_connector(global_command, SPARK_BASE_URL, SPARK_BOT_TOKEN, SPARK_BOT_EMAIL, SPARK_BOT_NAME, request)
-	#elif request.method == 'GET':
-		#message=spark_connector(global_command, SPARK_BASE_URL, SPARK_BOT_TOKEN, SPARK_BOT_EMAIL, SPARK_BOT_NAME, request, method="get")
-		#return message
+
+	if SPARK_BASE_URL != "XXX" and SPARK_BOT_TOKEN != "XXX" and SPARK_BOT_EMAIL != "XXX" and SPARK_BOT_NAME != "XXX":
+		message=spark_connector(global_command, SPARK_BASE_URL, SPARK_BOT_TOKEN, SPARK_BOT_EMAIL, SPARK_BOT_NAME, request,spark_authorized_users)
+	else:
+		print ("Please check Spark settings and credentials!")
+		message=False
+
+	return message
+
+@app.route('/slack', methods=['GET', 'POST'])
+def slackconnector():
+
+	if SLACK_BASE_URL != "XXX" and SLACK_BOT_TOKEN != "XXX" and SLACK_WEBHOOK_SECRET != "XXX" and SLACK_BOT_USERNAME != "XXX":
+		message=slack_connector(global_command, SLACK_BASE_URL, SLACK_BOT_TOKEN, SLACK_WEBHOOK_SECRET,SLACK_BOT_USERNAME,slack_client, request, slack_authorized_users)
+	else:
+		print ("Please check Slack settings and credentials!")
+		message=False
+
 	return message
 
 #####################Legal
@@ -608,8 +691,8 @@ def main():
 #####################Main
 if __name__ == "__main__":
 	
-	if SPARK_BOT_TOKEN != "XXX":
-		if spark_webhook(SPARK_BOT_TOKEN, SPARK_WEBHOOK_URL):
-			print("Webhook Success!")
+	#if SPARK_BOT_TOKEN != "XXX":
+		#if spark_webhook(SPARK_BOT_TOKEN, SPARK_WEBHOOK_URL):
+			#print("Webhook Success!")
 	
 	main()

@@ -18,7 +18,7 @@ Table of Contents
 Created by [https://github.com/joncampo]
 
 ## Features
-![alt tag](images/what_is.png)
+![alt tag](images/what_is_enatics_arch.png)
 
 ## Quick Usage
 
@@ -26,28 +26,52 @@ Created by [https://github.com/joncampo]
 
 ## Installation Guide
 
-1. Download or clone ENatics
-2. Install the modules/libraries from requirements.txt
-3. Install Heroku Tools - https://toolbelt.heroku.com/
-4. Create Heroku App - heroku create
-5. Deploy using Heroku procedure below:
-	a. git add . <br />
-	b. git commit -m "Update" <br />
-	c. git push heroku master <br />
-6. Get the webhook URL using command -> Heroku open
-6. Edit Settings.py and enter Platform IP Addresses and user/pass. <br />
-	a. For Spark bot, Create and get the Bot Token from here - https://developer.ciscospark.com/apps.html <br />
-	b. For Facebook bot, enter App ID from here -  <br />
-		i. Create a FB Bot Page <br />
-		ii. Create App ID - https://developers.facebook.com/quickstarts/?platform=web <br />
-		iii. Set the Heroku Open Webhook URL and verify token <br />
-		***This is another nice reference for FB bot - https://blog.hartleybrody.com/fb-messenger-bot/ <br />
+Installation Guide for Cloud Based ENatics Bot
+
+A.	Preparation
+1.	Download or clone ENatics from Github on your desktop- https://github.com/joncampo/ENatics-DNA-Bot.git<br />
+2.	From your desktop, install Heroku Tools - https://toolbelt.heroku.com/<br />
+3.	Login to Heroku – heroku login<br />
+4.	Create Heroku App - heroku create<br />
+5.	Get the Heroku URL via this command – heroku open<br />
+
+B.	Credentials<br />
+1.	Create Bots in chat platforms:<br />
+•	Spark<br />
+a)	Create bot - https://developer.ciscospark.com/apps.html<br />
+b)	Get the token<br />
+•	Facebook<br />
+
+a)	Create FB bot page - https://www.facebook.com/pages/create/<br />
+b)	Create App - https://developers.facebook.com/apps/<br />
+c)	Inside the app, go to messenger to subscribe to created FB bot page in Step A and get the token<br />
+d)	Inside the app, go to webhook and enter the Heroku URL from Step A/4. Create and get the verify token.<br />
+2.	Gather device IP/URL and username/password for any of the following:<br />
+•	DNA Center<br />
+•	APIC-EM<br />
+•	CMX<br />
+3.	Enter the Heroku App name, Bot tokens, device URL/IP and username/password on settings.py file in credentials folder.
+4.	Important For Security! 
+Perform the following:
+•	Spark – edit spark_email.txt found in credentials folder. Replace any with authorized user Spark Email Accounts<br />
+•	Facebook – Do not publish the FB Bot page. Add as admins the authorized user FB accounts<br />
+•	Slack -  edit slack_username.txt found in credentials folder. Enter the authorized Slack user names.<br />
+C.	Deploy<br />
+1.	Secure connectivity options between Heroku Cloud and On-premises devices:<br />
+a.	Perform port forwarding and allow https in Firewall between DNA platforms and Heroku public IPs<br />
+b.	For paid Heroku deployment, establish SSL between Heroku cloud and customer network - https://devcenter.heroku.com/articles/ssl<br />
+
+2.	Perform the following commands to deploy ENatics to Heroku cloud.<br />
+a. git add . <br />
+b. git commit -m "Update" <br />
+c. git push heroku master<br />
+
 
 
 ## Demo
 
 Message me on the following to see me work!<br />
-Facebook - https://www.facebook.com/CiscoENatics <br />
+Facebook - https://www.facebook.com/ENaticsBot <br />
 Cisco Spark - ENatics@sparkbot.io  <br />
 
 Please See Presentation and Demo Video!

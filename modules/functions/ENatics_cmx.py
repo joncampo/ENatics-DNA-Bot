@@ -36,7 +36,7 @@ def cmx_map_download(CMX_BASE_URL,CMX_Auth,cmx_map_download):
         print ("Image does not exist!")
         FULL_URL = "https://"+CMX_BASE_URL+"/api/config/v1/maps/imagesource/"+cmx_map_download
         headers = {"Authorization": CMX_Auth}     
-        result = requests.get(FULL_URL, headers=headers, verify=False).content
+        result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).content
         with open('temp/map.png', 'wb') as handler:
             handler.write(result)
 
@@ -124,7 +124,7 @@ def cmx_list_client(cmx_url,cmx_auth):
 
     FULL_URL =  "https://"+cmx_url+"/api/location/v2/clients/active"
     headers = {"Authorization": cmx_auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False,timeout=3).json()
 
 
     num=1
@@ -153,7 +153,7 @@ def cmx_list_floors(cmx_url,cmx_auth):
     #FULL_URL = "https://"+BASE_URL+"/api/config/v1/maps"
     FULL_URL =  "https://"+cmx_url+"/api/config/v1/maps/floor/list"
     headers = {"Authorization": cmx_auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).json()
     #print (json.dumps(response, indent = 4, separators = (",",":")))
     #print (response)
 
@@ -182,7 +182,7 @@ def get_floor_id(cmx_url,cmx_auth,floor):
     #FULL_URL = "https://"+BASE_URL+"/api/config/v1/maps"
     FULL_URL =  "https://"+cmx_url+"/api/config/v1/maps/info/"+floor
     headers = {"Authorization": cmx_auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).json()
 
     #print (json.dumps(response, indent = 4, separators = (",",":")))
     #print (response)
@@ -202,7 +202,7 @@ def cmx_collect_client(cmx_url,cmx_auth, floor_id):
     #FULL_URL = "https://"+BASE_URL+"/api/config/v1/maps"
     FULL_URL =  "https://"+cmx_url+"/api/location/v2/clients"
     headers = {"Authorization": cmx_auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).json()
     #print (json.dumps(response, indent = 4, separators = (",",":")))
     #print (response)
 
@@ -269,7 +269,7 @@ def cmx_client_info(CMX_BASE_URL,CMX_Auth,cmx_client):
     #FULL_URL = "https://"+BASE_URL+"/api/config/v1/maps"
     FULL_URL = "https://"+CMX_BASE_URL+"/api/location/v1/clients/"+cmx_client
     headers = {"Authorization": CMX_Auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).json()
     #print (json.dumps(response, indent = 4, separators = (",",":")))
     #print (response)
     #cmx_user_location=result["mapInfo"]["floorRefId"]
@@ -325,7 +325,7 @@ def cmx_collect_zones(cmx_url,cmx_auth, floor):
     #FULL_URL = "https://"+BASE_URL+"/api/config/v1/maps"
     FULL_URL =  "https://"+cmx_url+"/api/config/v1/maps/info/"+floor
     headers = {"Authorization": cmx_auth}
-    result = requests.get(FULL_URL, headers=headers, verify=False).json()
+    result = requests.get(FULL_URL, headers=headers, verify=False, timeout=3).json()
 
     #print(result["zones"][1]["name"])
     #print(result["zones"][1]["zoneCoordinate"])

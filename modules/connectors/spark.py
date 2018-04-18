@@ -26,7 +26,7 @@ import xml.dom.minidom
 
 ###################Connector
 
-def spark_connector(global_command, SPARK_BASE_URL,SPARK_BOT_TOKEN,SPARK_BOT_EMAIL,SPARK_BOT_NAME, request):
+def spark_connector(global_command, SPARK_BASE_URL,SPARK_BOT_TOKEN,SPARK_BOT_EMAIL,SPARK_BOT_NAME, request,spark_authorized_users):
 
     if request.method == 'POST':
         webhook = request.get_json(silent=True)
@@ -34,20 +34,33 @@ def spark_connector(global_command, SPARK_BASE_URL,SPARK_BOT_TOKEN,SPARK_BOT_EMA
         senders_email = webhook['data']['personEmail']
         room_id = webhook['data']['roomId']
 
+        print (webhook)
+
         msg = None
         content_file = None
         if senders_email != SPARK_BOT_EMAIL:
-            result = send_spark_get(SPARK_BOT_TOKEN,'messages/{0}'.format(webhook['data']['id']))  ###gets message content based on data id of webhook data
 
-            in_message = result["text"]
+            match=0
+            for i in spark_authorized_users:
+                if senders_email == i.lower() or "any" == i.lower():
+                    match=1
+                    print('Success')
+                    break
 
-            raw_msg = global_command.handle_text(chat="spark",senders_id=senders_email,cmd=in_message,token=SPARK_BOT_TOKEN, room_id=room_id)
-            ending_next="\n\n*Type **help** to see what's next!*"
-            msg=raw_msg[0]
-            content_file=raw_msg[1]
-            if msg != None:
-                spark_send_message(SPARK_BOT_TOKEN, room_id, msg+ending_next,content_file)
-                return "true"
+            if match == 1:
+
+                result = send_spark_get(SPARK_BOT_TOKEN,'messages/{0}'.format(webhook['data']['id']))  ###gets message content based on data id of webhook data
+
+                in_message = result["text"]
+
+                raw_msg = global_command.handle_text(chat="spark",senders_id=senders_email,cmd=in_message,token=SPARK_BOT_TOKEN, room_id=room_id)
+                ending_next="\n\n*Type **help** to see what's next!*"
+                msg=raw_msg[0]
+                content_file=raw_msg[1]
+
+                if msg != None:
+                    spark_send_message(SPARK_BOT_TOKEN, room_id, msg+ending_next,content_file)
+                    return "true"
 
         return True
 
