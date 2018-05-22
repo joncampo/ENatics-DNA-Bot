@@ -1,1 +1,1 @@
-web: gunicorn ENatics:app
+web: python ENatics.py

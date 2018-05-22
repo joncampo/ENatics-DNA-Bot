@@ -62,6 +62,11 @@ def spark_connector(global_command, SPARK_BASE_URL,SPARK_BOT_TOKEN,SPARK_BOT_EMA
                     spark_send_message(SPARK_BOT_TOKEN, room_id, msg+ending_next,content_file)
                     return "true"
 
+            else:
+                #msg="Sorry! You are not authorized to talk to me."
+                msg="Sorry <@personEmail:"+senders_email+">, I am not authorized to talk to you."
+                spark_send_message(SPARK_BOT_TOKEN, room_id, msg,content_file)
+
         return True
 
     elif request.method == 'GET':

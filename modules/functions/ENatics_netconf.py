@@ -27,7 +27,7 @@ See Privacy Policy - https://arcane-spire-45844.herokuapp.com/privacy
 
 
 ################### XML file to open
-get_interfaces_config_file = 'modules/functions/yang/get_interfaces.xml'
+get_interfaces_config_file = 'modules/functions/yang/get_interface_gigabit2.xml'
 FILE2 = 'modules/functions/yang/get_hostname.xml'
 
 ########################################################################
@@ -40,4 +40,25 @@ def netconf_get_interface(HOST,PORT,USER,PASS):
                     allow_agent=False, look_for_keys=False) as m:
         with open(get_interfaces_config_file) as f:
             return(m.get_config('running', f.read()))
+
+
+def reset_interface(HOST,PORT,USER,PASS,operation):
+    with manager.connect(host=HOST, port=PORT, username=USER,
+                     password=PASS, hostkey_verify=False,
+                     device_params={'name': 'default'},
+                     allow_agent=False, look_for_keys=False) as m:
+
+        # XML filter to issue with the get operation
+        payload = '''
+                    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+                        <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+                        <interface>
+                            <name>GigabitEthernet2</name>
+                            <enabled>'''+operation+'''</enabled>
+                        </interface>
+                        </interfaces>
+                    </config>
+                '''
+        result = m.edit_config(target='running', config=payload)
+        return result
 

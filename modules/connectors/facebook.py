@@ -107,16 +107,21 @@ def send_message(FB_BOT_TOKEN, recipient_id, message_text):
 		        "content_type":"text",
 		        "title":"list meraki",
 		        "payload":"list meraki"
-		      },	  
+		      },
+              {
+                "content_type":"text",
+                "title":"list iot",
+                "payload":"list iot"
+              },    	  
+              {
+                "content_type":"text",
+                "title":"list alarms",
+                "payload":"list alarms"
+              },                   
 			  {
 		        "content_type":"text",
-		        "title":"netconf interface",
-		        "payload":"netconf interface"
-		      },
-		      {
-		        "content_type":"text",
-		        "title":"google Cisco DNA",
-		        "payload":"google Cisco DNA"
+		        "title":"troubleshoot interface",
+		        "payload":"troubleshoot interface"
 		      },
 		      {
 		        "content_type":"text",
